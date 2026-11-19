@@ -10,6 +10,16 @@
 
 > 独立制作的虚构短片。GPTAstra100、故事中的论文和回执，以及最终的逆转公式属于剧情设定。ChatGPT 界面及标识来自实际截图和录屏素材。该项目未获 OpenAI 背书。
 
+### 合并成片分卷
+
+从 Release 下载 `GPTAstra100_4K.mp4.part01` 到 `part08` 和 `SHA256.json`，放在同一个文件夹里。假设该文件夹叫 `download`，在仓库根目录运行：
+
+```powershell
+python .\tools\join-release.py .\download
+```
+
+脚本校验每一卷和合并后的 SHA-256，输出 `download/GPTAstra100_4K.mp4`。合并不会重新编码。
+
 ## 自己渲染一遍
 
 ### 环境
