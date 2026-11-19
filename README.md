@@ -1,12 +1,12 @@
-# GPTAstra100 · 时间回执
+# GPTAstra100 时间回执
 
 凌晨三点，ChatGPT Work 的模型菜单里出现了 GPTAstra100。有人把推理强度拖到 Ultra 2×，问它「Astra100 大人，请帮我找到逆转时间的公式😭」。第一条回执来自这台电脑，落款却是明天。
 
-**3 分 30 秒 · 4K UHD · 30 fps · H.264 + AAC 立体声**
+**3 分 30 秒，4K UHD，30 fps，H.264 + AAC 立体声**
 
-[下载 4K 成片](https://github.com/xiajiadi/gptastra100-time-reversal/releases/tag/v1.0.0) · [复现渲染](#在-windows-上渲染) · [完整分镜](docs/storyboard.md) · [倒影素材提示词](docs/reflection-prompt.md)
+[下载 4K 成片](https://github.com/xiajiadi/gptastra100-time-reversal/releases/tag/v1.0.0)　[复现渲染](#在-windows-上渲染)　[完整分镜](docs/storyboard.md)　[倒影素材提示词](docs/reflection-prompt.md)
 
-![模型下拉菜单中出现 GPTAstra100](docs/cover.jpg)
+![推理强度胶囊调到 Ultra 2×](docs/cover-ultra.png)
 
 > 独立制作的虚构短片。GPTAstra100、片中的实验、回执和逆转推导均为剧情设定。界面使用 ChatGPT 截图与录屏素材，项目未获 OpenAI 背书。
 
@@ -14,11 +14,11 @@
 
 每组左侧是显示器原画，右侧是虚拟手机在**同一个时刻**拍到的画面。**黄色虚线**是将镜头视野投到屏幕平面上得到的近似取景框，**十字**是镜头指向的位置。框超出屏幕时，右图还能看到显示器边框或周围的黑暗空间。点图可看大图。
 
-| 00:08.00 · 亮屏后的全景 | 00:30.70 · 推理强度到 Ultra 2× |
+| 00:08.00 亮屏后的全景 | 00:30.70 推理强度到 Ultra 2× |
 | --- | --- |
 | [![屏幕亮起，左图黄框包住显示器，右图带有房间边缘](docs/breakdown/shot-01.jpg)](docs/breakdown/shot-01.jpg) | [![Ultra 2×，左图黄框收紧到模型控件，右图放大胶囊面板](docs/breakdown/shot-02.jpg)](docs/breakdown/shot-02.jpg) |
 | 镜头离显示器较远，视野带进了屏幕边框和暗室。用这一镜交代拍摄位置。 | 镜头从右侧贴近模型控件。拖动取自录屏，虚构模型名和 2× 标签在屏幕画布上合成。 |
-| **01:04.40 · 时空曲面与光锥** | **03:15.67 · 秒针开始倒走** |
+| **01:04.40 时空曲面与光锥** | **03:15.67 秒针开始倒走** |
 | [![论文特写，黄色虚线斜跨论文图版，右图可读施瓦西曲面和光锥](docs/breakdown/shot-03.jpg)](docs/breakdown/shot-03.jpg) | [![时钟特写，黄色虚线移向屏幕右下角，右图显示时钟和屏幕边缘](docs/breakdown/shot-04.jpg)](docs/breakdown/shot-04.jpg) |
 | 浏览器窗口仍叠在后台。镜头对焦在论文的施瓦西空间曲面和洛伦兹光锥上，让图注和公式进入特写。 | 镜头压到屏幕右下角。任务栏时钟先按正常速度走，再从 03:03:02 向下计数。 |
 
