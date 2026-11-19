@@ -53,53 +53,97 @@
       await save(`out/shots/sheet-${q.get('name') || 'x'}.jpg`, await new Promise(r => sh.toBlob(r, 'image/jpeg', .85)));
       await log('SHEET DONE'); return;
     }
-    if (q.has('compare')) {   // ?compare=t1,t2,... → 制作拆解对比图：左 = 代码画出的屏幕，右 = 虚拟手机拍出的成片
-      const ts = q.get('compare').split(',').map(Number), notes = (q.get('notes') || '').split('|');
-      const tw = 940, th = 529, gap = 20, pad = 30, head = 170, rowH = 64 + th + 70, foot = 90;
-      const out = document.createElement('canvas'); out.width = pad * 2 + tw * 2 + gap; out.height = head + ts.length * rowH + foot; const o = out.getContext('2d');
-      const SANS = '"Microsoft YaHei UI", "Noto Sans SC", sans-serif';
-      o.fillStyle = '#0d0e10'; o.fillRect(0, 0, out.width, out.height);
-      o.fillStyle = '#f2f0ea'; o.font = `700 46px ${SANS}`; o.fillText('GPTAstra100 制作拆解', pad, 72);
-      o.fillStyle = '#9a9890'; o.font = `26px ${SANS}`; o.fillText('同一时刻：左边是代码画出的屏幕画面，右边是代码模拟的手机对着屏幕"拍"出来的成片画面', pad, 122);
-      const SWm = .5975, SHm = .3361, SCY = .30, LW = 2560, LH = 1440;
-      for (let i = 0; i < ts.length; i++) {
-        const t = ts[i], y0 = head + i * rowH;
-        // 镜头取景范围投影到屏幕平面（单位：屏幕宽高的比例，0..1 为屏幕内）
-        const p = O.pose(t), asp = W / H, pts = [];
-        for (const [sx, sy] of [[-1, 1], [1, 1], [1, -1], [-1, -1]]) {
-          const d = [p.F[0] + p.R[0] * sx * p.tanH + p.U[0] * sy / asp * p.tanH, p.F[1] + p.R[1] * sx * p.tanH + p.U[1] * sy / asp * p.tanH, p.F[2] + p.R[2] * sx * p.tanH + p.U[2] * sy / asp * p.tanH];
-          const k = -p.C[2] / d[2], X = p.C[0] + d[0] * k, Y = p.C[1] + d[1] * k;
-          pts.push([X / SWm + .5, .5 - (Y - SCY) / SHm]);
+    if (q.has('compare')) {
+      const times = q.get('compare').split(',').filter(Boolean).map(Number);
+      const notes = (q.get('notes') || '').split('|');
+      const name = (q.get('name') || '制作拆解对比图').replace(/\.jpg$/, '');
+      const tw = 920, th = Math.round(tw * 9 / 16), pad = 32, gap = 24;
+      const rowW = pad * 2 + tw * 2 + gap, rowH = th + 182;
+      const paper = '#0e1118', ink = '#e9edf6', muted = '#aab5c8', yellow = '#ffda54';
+      const sans = '"Microsoft YaHei UI", "Segoe UI", sans-serif';
+      const stamp = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + (t % 60).toFixed(2).padStart(5, '0');
+      const canvas = (width, height) => Object.assign(document.createElement('canvas'), { width, height });
+      if (!times.length || times.some(t => !Number.isFinite(t) || t < 0 || t >= O.RUNTIME)) throw new Error('Invalid film time');
+      if (!/^[\p{L}\p{N}_-]+$/u.test(name)) throw new Error('Invalid comparison image name');
+      const [left, top] = O.scrToWorld([0, 0]);
+      const [right, bottom] = O.scrToWorld([O.LW, O.LH]);
+      const aspect = W / H;
+      const insets = (q.get('inset') || '').split(';').map(entry => entry.split(',').map(Number));
+      const all = q.has('split') ? null : canvas(rowW, times.length * rowH);
+      const allCtx = all?.getContext('2d');
+      const write = async (img, file) => {
+        const blob = await new Promise(resolve => img.toBlob(resolve, 'image/jpeg', .94));
+        const response = await save('out/shots/' + file, blob);
+        if (!response.ok) throw new Error('Could not save ' + file);
+      };
+      for (const [i, time] of times.entries()) {
+        // Both views and the camera pose are sampled from the same retimed frame.
+        const src = frame(time), p = info.pose;
+        const onScreen = (sx, sy) => {
+          const x = sx, y = sy / aspect;
+          const scale = p.tanH * (1 + .035 * (x * x + y * y));
+          const ray = p.F.map((value, j) => value + scale * (p.R[j] * x + p.U[j] * y));
+          const distance = -p.C[2] / ray[2];
+          return [(p.C[0] + distance * ray[0] - left) / (right - left),
+            (top - p.C[1] - distance * ray[1]) / (top - bottom)];
+        };
+        const corners = [[-1, 1], [1, 1], [1, -1], [-1, -1]].map(([x, y]) => onScreen(x, y));
+        const bounds = j => [Math.min(0, ...corners.map(point => point[j])), Math.max(1, ...corners.map(point => point[j]))];
+        const [minX, maxX] = bounds(0), [minY, maxY] = bounds(1);
+        const scale = .95 / Math.max(maxX - minX, maxY - minY);
+        const mapX = x => tw * (.5 + (x - (minX + maxX) / 2) * scale);
+        const mapY = y => th * (.5 + (y - (minY + maxY) / 2) * scale);
+        const plate = canvas(rowW, rowH), ctx = plate.getContext('2d');
+        ctx.fillStyle = paper; ctx.fillRect(0, 0, rowW, rowH);
+        ctx.fillStyle = yellow; ctx.font = '600 29px Consolas, monospace';
+        ctx.fillText(stamp(time), pad, 48);
+        ctx.fillStyle = ink; ctx.font = '600 30px ' + sans;
+        ctx.fillText(notes[i] || '镜头拆解', pad + 172, 48, 650);
+        const yaw = Math.atan2(-p.F[0], -p.F[2]) * 180 / Math.PI;
+        ctx.fillStyle = muted; ctx.font = '21px ' + sans; ctx.textAlign = 'right';
+        ctx.fillText('水平视场 ' + p.fov.toFixed(0) + '°   横向偏角 ' + yaw.toFixed(1) + '°   对焦距离 ' + (p.focus * 100).toFixed(0) + ' cm', rowW - pad, 48);
+        ctx.textAlign = 'left';
+        const y0 = 119, x1 = pad + tw + gap;
+        ctx.font = '600 22px ' + sans; ctx.fillText('显示器原画  /  拍屏前', pad, 103);
+        ctx.fillText('虚拟手机画面  /  拍屏后', x1, 103);
+        ctx.fillStyle = '#161d27'; ctx.fillRect(pad, y0, tw, th); ctx.fillRect(x1, y0, tw, th);
+        ctx.drawImage(O.Screen.cv, pad + mapX(0), y0 + mapY(0), mapX(1) - mapX(0), mapY(1) - mapY(0));
+        ctx.drawImage(src, x1, y0, tw, th);
+        const inset = insets.find(values => values.length === 5 && values.every(Number.isFinite) && values[0] === i);
+        if (inset) {
+          const [, sx, sy, sw, sh] = inset;
+          if (sx >= 0 && sy >= 0 && sw > 0 && sh > 0 && sx + sw <= W && sy + sh <= H) {
+            const iw = Math.min(365, (th - 65) * sw / sh), ih = iw * sh / sw;
+            const ix = x1 + tw - iw - 14, iy = y0 + th - ih - 14;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(src, sx, sy, sw, sh, ix, iy, iw, ih);
+            ctx.imageSmoothingEnabled = true;
+            ctx.strokeStyle = yellow; ctx.lineWidth = 2;
+            ctx.strokeRect(ix, iy, iw, ih);
+          }
         }
-        // 取景框超出屏幕时缩小屏幕截图，让整个框都能看见
-        const xs = pts.map(v => v[0]).concat([0, 1]), ys = pts.map(v => v[1]).concat([0, 1]);
-        const bx0 = Math.min(...xs), bx1 = Math.max(...xs), by0 = Math.min(...ys), by1 = Math.max(...ys);
-        const inside = bx0 >= -.001 && bx1 <= 1.001 && by0 >= -.001 && by1 <= 1.001;
-        const sc = inside ? 1 : Math.min(1, .9 / Math.max(bx1 - bx0, by1 - by0)), cx = (bx0 + bx1) / 2, cy = (by0 + by1) / 2;
-        const mx = u => (sc < 1 ? tw / 2 + (u - cx) * tw * sc : u * tw), my = v => (sc < 1 ? th / 2 + (v - cy) * th * sc : v * th);
-        O.Screen.draw(O.storyTime(t)); const raw = document.createElement('canvas'); raw.width = tw; raw.height = th; const rc = raw.getContext('2d');
-        rc.fillStyle = '#060607'; rc.fillRect(0, 0, tw, th); rc.drawImage(O.Screen.cv, mx(0), my(0), mx(1) - mx(0), my(1) - my(0));
-        if (sc < 1) { rc.strokeStyle = '#3a3b3f'; rc.lineWidth = 2; rc.strokeRect(mx(0), my(0), mx(1) - mx(0), my(1) - my(0)); rc.fillStyle = '#6d6c66'; rc.font = `18px ${SANS}`; rc.fillText('显示器屏幕', mx(0) + 8, my(1) + 24); }
-        rc.save(); rc.strokeStyle = '#ff9a3c'; rc.lineWidth = 4; rc.setLineDash([14, 8]); rc.beginPath(); pts.forEach((q2, j) => j ? rc.lineTo(mx(q2[0]), my(q2[1])) : rc.moveTo(mx(q2[0]), my(q2[1]))); rc.closePath(); rc.stroke(); rc.restore();
-        const src = frame(t);
-        o.fillStyle = '#e8e6df'; o.font = `600 28px ${SANS}`; o.fillText(`${String(i + 1).padStart(2, '0')}　${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`, pad, y0 + 44);
-        o.fillStyle = '#8a8880'; o.font = `22px ${SANS}`;
-        o.fillText('代码画出的屏幕（虚线框 = 镜头拍到的范围）', pad + 140, y0 + 44);
-        o.fillText('成片：代码模拟的手机对着屏幕拍摄', pad + tw + gap, y0 + 44);
-        o.drawImage(raw, pad, y0 + 60); o.drawImage(src, pad + tw + gap, y0 + 60, tw, th);
-        o.strokeStyle = '#2a2b2e'; o.lineWidth = 2; o.strokeRect(pad, y0 + 60, tw, th); o.strokeRect(pad + tw + gap, y0 + 60, tw, th);
-        // 局部放大：直接取 4K 原图的一小块，不缩放细节
-        const ins = (q.get('inset') || '').split(';').map(s => s.split(',').map(Number)).find(a => a[0] === i);
-        if (ins) {
-          const [, sx0, sy0, sw, sh] = ins, iw = 420, ih = Math.round(iw * sh / sw), ix = pad + tw + gap + tw - iw - 16, iy = y0 + 60 + th - ih - 16;
-          o.imageSmoothingEnabled = false; o.drawImage(src, sx0, sy0, sw, sh, ix, iy, iw, ih); o.imageSmoothingEnabled = true;
-          o.strokeStyle = '#ff9a3c'; o.lineWidth = 3; o.strokeRect(ix, iy, iw, ih);
-          o.fillStyle = 'rgba(0,0,0,.7)'; o.fillRect(ix, iy, iw, 34); o.fillStyle = '#ffcf9f'; o.font = `20px ${SANS}`; o.fillText('4K 原图局部放大：屏幕的像素网格', ix + 10, iy + 24);
-        }
-        o.fillStyle = '#c9c7bf'; o.font = `24px ${SANS}`; o.fillText(notes[i] || '', pad, y0 + 60 + th + 44);
+        ctx.strokeStyle = '#343d4c'; ctx.lineWidth = 2;
+        ctx.strokeRect(pad + mapX(0), y0 + mapY(0), mapX(1) - mapX(0), mapY(1) - mapY(0));
+        ctx.strokeRect(x1, y0, tw, th);
+        const [cx, cy] = onScreen(0, 0), aimX = mapX(cx), aimY = mapY(cy);
+        ctx.save(); ctx.translate(pad, y0);
+        ctx.strokeStyle = '#0b0d11'; ctx.lineWidth = 7;
+        ctx.setLineDash([14, 8]); ctx.beginPath();
+        corners.forEach(([x, y], j) => j ? ctx.lineTo(mapX(x), mapY(y)) : ctx.moveTo(mapX(x), mapY(y)));
+        ctx.closePath(); ctx.stroke();
+        ctx.strokeStyle = yellow; ctx.lineWidth = 4; ctx.stroke();
+        ctx.setLineDash([]); ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(aimX - 9, aimY); ctx.lineTo(aimX + 9, aimY);
+        ctx.moveTo(aimX, aimY - 9); ctx.lineTo(aimX, aimY + 9); ctx.stroke();
+        ctx.restore();
+        ctx.font = '20px ' + sans; ctx.fillStyle = yellow;
+        ctx.fillText('黄色虚线  取景范围     ＋  镜头朝向的中心', pad, rowH - 21);
+        ctx.fillStyle = muted; ctx.textAlign = 'right';
+        ctx.fillText('同一时刻  ·  取景框近似投影到屏幕平面', rowW - pad, rowH - 21);
+        if (allCtx) allCtx.drawImage(plate, 0, i * rowH);
+        else await write(plate, name + '-' + String(i + 1).padStart(2, '0') + '.jpg');
       }
-      o.fillStyle = '#77756e'; o.font = `22px ${SANS}`; o.fillText('界面底图来自截图与录屏。论文图版、对话、虚拟摄像机与音轨按时间表生成。', pad, out.height - 38);
-      await save('out/shots/' + (q.get('name') || '制作拆解对比图.jpg'), await new Promise(r => out.toBlob(r, 'image/jpeg', .92)));
+      if (all) await write(all, name + '.jpg');
       await log('COMPARE DONE'); return;
     }
     if (q.has('screen')) {
