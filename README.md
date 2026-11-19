@@ -1,12 +1,12 @@
-# GPTAstra100 时间回执
+# GPT-100 Astra 时间回执
 
-凌晨三点，ChatGPT Work 的模型菜单里出现了 GPTAstra100。有人把推理强度拖到 Ultra 2×，问它「Astra100 大人，请帮我找到逆转时间的公式😭」。第一条回执来自这台电脑，落款却是明天。
+凌晨三点，ChatGPT Work 的模型菜单里出现了 GPT-100 Astra，片中显示为 GPTAstra100。有人把推理强度拖到 Ultra 2×，问它「Astra100 大人，请帮我找到逆转时间的公式😭」。第一条回执来自这台电脑，落款却是明天。
 
 **3 分 30 秒，4K UHD，30 fps，H.264 + AAC 立体声**
 
 [下载 4K 成片](https://github.com/xiajiadi/gptastra100-time-reversal/releases/tag/v1.0.0)　[复现渲染](#在-windows-上渲染)　[完整分镜](docs/storyboard.md)　[倒影素材提示词](docs/reflection-prompt.md)
 
-![推理强度胶囊调到 Ultra 2×](docs/cover-ultra.png)
+[![4K 原片 00:30.70，推理强度胶囊调到 Ultra 2×](docs/cover-ultra.png)](docs/cover-ultra.png)
 
 > 独立制作的虚构短片。GPTAstra100、片中的实验、回执和逆转推导均为剧情设定。界面使用 ChatGPT 截图与录屏素材，项目未获 OpenAI 背书。
 
