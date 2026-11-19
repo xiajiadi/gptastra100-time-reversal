@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>GPTAstra100</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* 随项目打包的开源字体（SIL OFL 1.1），保证在没有安装它的电脑上渲染结果一致 */
+  /* 用独立的名字，确保一定使用这份打包字体，而不是系统里可能存在的同名字体 */
+  @font-face { font-family: "Astra Serif"; src: url("fonts/NotoSerifSC-VF.ttf") format("truetype"); font-weight: 200 900; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #cv { width: 100vw; height: 56.25vw; max-height: 100vh; max-width: 177.78vh; position: absolute; inset: 0; margin: auto; display: block; }
+  #msg { position: fixed; left: 10px; bottom: 8px; color: #666; font: 12px Consolas, monospace; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<audio id="au" preload="auto"></audio>
+<div id="msg"></div>
+<script src="js/util.js"></script>
+<script src="js/mathtex.js"></script>
+<script src="js/story.js"></script>
+<script src="js/revision-story.js"></script>
+<script src="js/chatgpt.js"></script>
+<script src="js/footage-plates.js"></script>
+<script src="js/revision-plots.js"></script>
+<script src="js/browser.js"></script>
+<script src="js/screen.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/mp4.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/revision-audio.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><body><script>
+(async () => {
+  const log = m => fetch('/__log?m=' + encodeURIComponent(m));
+  try {
+    const c = document.createElement('canvas'); c.width = 3840; c.height = 2160;
+    const gl = c.getContext('webgl2');
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    await log('GL ' + (ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)));
+    await log('float rt ' + !!gl.getExtension('EXT_color_buffer_float') + ' maxTex ' + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    for (const codec of ['avc1.640033', 'avc1.640034', 'avc1.64002A']) {
+      for (const hw of ['prefer-hardware', 'prefer-software']) {
+        const r = await VideoEncoder.isConfigSupported({ codec, width: 3840, height: 2160, bitrate: 50e6, framerate: 30, avc: { format: 'avc' }, hardwareAcceleration: hw });
+        await log(`enc ${codec} ${hw} ${r.supported}`);
+      }
+    }
+    const c2 = document.createElement('canvas'); c2.width = 3840; c2.height = 2160; const x = c2.getContext('2d');
+    let t0 = performance.now();
+    for (let k = 0; k < 10; k++) { x.fillStyle = '#222'; x.fillRect(0, 0, 3840, 2160); x.font = '30px "Segoe UI Variable Text"'; x.fillStyle = '#ddd'; for (let i = 0; i < 400; i++) x.fillText('The quick brown fox jumps over the lazy dog 熵增 逆转 ' + i, (i % 4) * 960, 20 + (i >> 2) * 21); }
+    await log('2d 4k text frame ms ' + ((performance.now() - t0) / 10).toFixed(1));
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    t0 = performance.now();
+    for (let k = 0; k < 10; k++) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c2); gl.generateMipmap(gl.TEXTURE_2D); gl.finish(); }
+    await log('upload ms ' + ((performance.now() - t0) / 10).toFixed(1));
+    await log('TEST DONE');
+  } catch (e) { await log('TEST ERR ' + e); }
+})();
+</script></body>
